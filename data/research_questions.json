@@ -1,0 +1,202 @@
+[
+  {
+    "category": "retrieval_method",
+    "question": "What retrieval strategy does the paper use to select relevant passages before generation?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "How does dense passage retrieval differ from traditional sparse retrieval methods like BM25?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "What is the role of the retriever component in a retrieval-augmented generation pipeline?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "How are query and document embeddings combined to compute retrieval relevance scores?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "What re-ranking techniques are applied after initial retrieval to improve precision?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "How is the retriever jointly trained or fine-tuned together with the generator model?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "What chunking or passage segmentation strategy is used to prepare the retrieval corpus?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "How does the paper handle multi-hop retrieval when a question requires combining several documents?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "What indexing structure (e.g. FAISS, HNSW) is used to make retrieval efficient at scale?",
+    "expected_sources": []
+  },
+  {
+    "category": "retrieval_method",
+    "question": "How does the method decide how many passages to retrieve per query?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "What datasets are used to train and evaluate the retrieval-augmented generation system?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "What is the size (number of examples) of the training dataset used in the experiments?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "What knowledge source or corpus is used for the retrieval index (e.g. Wikipedia dump)?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "How was the evaluation dataset for open-domain question answering constructed?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "What preprocessing steps were applied to the raw text corpus before indexing?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "Are there any domain-specific datasets used to test generalization of the method?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "How is the train/validation/test split constructed for the benchmark used in the paper?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "What is the average document or passage length in the retrieval corpus?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "Does the paper use any synthetically generated data to augment training?",
+    "expected_sources": []
+  },
+  {
+    "category": "dataset",
+    "question": "What annotation process was used to label ground-truth relevant passages for evaluation?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "What evaluation metrics are used to measure question-answering performance?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "What exact-match and F1 scores does the proposed method achieve on the benchmark?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "How does the proposed method's performance compare against a closed-book (no retrieval) baseline?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "What is the reported Recall@k for the retrieval component?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "How much does retrieval augmentation reduce hallucination rates compared to a standard LLM?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "What ablation studies were performed to isolate the contribution of the retriever versus the generator?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "How does model performance scale with the number of retrieved passages (k)?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "What latency or throughput numbers are reported for the retrieval-augmented pipeline at inference time?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "How does the method perform on out-of-distribution or unseen entity questions?",
+    "expected_sources": []
+  },
+  {
+    "category": "results_metrics",
+    "question": "What statistical significance tests, if any, were used to validate the reported improvements?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "What limitations do the authors acknowledge regarding retrieval quality or coverage?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "What failure cases does the paper report where the retrieval-augmented model still produces incorrect answers?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "What computational or memory costs are cited as drawbacks of the proposed approach?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "What future research directions do the authors propose for improving retrieval-augmented generation?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "Does the paper discuss any risk of the retriever surfacing outdated or biased information?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "What scalability concerns are raised about applying the method to web-scale corpora?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "How do the authors suggest handling questions that require reasoning beyond simple fact retrieval?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "What limitations are noted regarding the evaluation methodology or benchmark realism?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "Does the paper mention any ethical concerns or societal risks associated with the proposed system?",
+    "expected_sources": []
+  },
+  {
+    "category": "limitations_future_work",
+    "question": "What open problems remain unsolved according to the authors' concluding discussion?",
+    "expected_sources": []
+  }
+]
