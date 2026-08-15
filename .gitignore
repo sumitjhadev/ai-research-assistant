@@ -39,3 +39,7 @@ tests/eval_results.json
 
 # Logs
 *.log
+
+# Core dumps (from crashed processes)
+core
+core.*

@@ -95,6 +95,12 @@ User Query → arXiv Search → Paper Retrieval → PDF Download
 
 [Live Demo](your-deployed-url-here)
 
+A static marketing/overview landing page for this project also lives in
+[`landing/`](landing/) (`landing/index.html`) — a single self-contained HTML
+file (Tailwind via CDN, no build step) that you can host on GitHub Pages,
+Cloudflare Pages, or any static host. See [`landing/README.md`](landing/README.md)
+for how to point it at your own GitHub/demo URLs.
+
 ## Screenshots
 
 ![Ask tab](screenshots/ask.png)
@@ -223,6 +229,9 @@ research-agent/
 ├── data/
 │   ├── research_questions.json   # 40-question eval set
 │   └── sample_topics.md          # alternative arXiv queries
+├── landing/
+│   ├── index.html                 # static marketing/overview landing page
+│   └── README.md                  # how to configure links + deploy it
 ├── .github/workflows/ci.yml      # pytest + ruff on every push
 ├── screenshots/                   # drop your own screenshots here
 ├── Dockerfile
