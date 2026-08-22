@@ -37,7 +37,11 @@ for path in (DATA_DIR, CORPUS_DIR, PDF_DIR):
 # Model configuration
 # --------------------------------------------------------------------------
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
-GEMINI_MODEL_NAME = "gemini-2.5-flash"
+# NOTE: "gemini-2.5-flash" was retired for new Google AI Studio API keys
+# (returns 404 "no longer available to new users"). "gemini-flash-latest" is
+# a stable alias Google keeps pointed at their current default Flash model,
+# so this project keeps working without code changes as Gemini versions roll.
+GEMINI_MODEL_NAME = "gemini-flash-lite-latest"
 
 # --------------------------------------------------------------------------
 # Chunking configuration

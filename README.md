@@ -54,7 +54,7 @@ User Query → arXiv Search → Paper Retrieval → PDF Download
 | Chunking | Sliding window, ~800 chars / ~150 char overlap, tagged with `paper_id`, `title`, `authors`, `source_url` |
 | Embeddings | `sentence-transformers` (`all-MiniLM-L6-v2`) |
 | Vector Store | FAISS `IndexFlatIP` over L2-normalized vectors (cosine similarity) |
-| Generation | Google Gemini (`gemini-2.5-flash`) via `google-generativeai` |
+| Generation | Google Gemini (`gemini-flash-lite-latest`) via `google-generativeai` (REST transport) |
 | Citation Verification | Regex-based check that every `[paper_id]` in the answer matches a retrieved chunk |
 
 ## Features
@@ -78,7 +78,10 @@ User Query → arXiv Search → Paper Retrieval → PDF Download
   reports Recall@5 and average retrieval latency to a JSON file.
 - **Production hardening** — retry/backoff on network calls, structured logging,
   Pydantic input validation, in-memory response caching + rate limiting on `/ask`,
-  Docker + CI, and a full pytest suite with mocked LLM calls.
+  Docker + CI, and a full pytest suite with mocked LLM calls. The Gemini client is
+  pinned to `transport="rest"` (avoids gRPC connectivity issues in restricted network
+  environments) and to the `gemini-flash-lite-latest` model alias (a fast, generously
+  quota'd free-tier model, confirmed working end-to-end).
 
 ## Tech Stack
 
@@ -89,17 +92,24 @@ User Query → arXiv Search → Paper Retrieval → PDF Download
 - **faiss-cpu** (`IndexFlatIP`) — vector index
 - **arxiv** — search & PDF download
 - **pypdf** — text extraction
-- **Google Gemini API** (`google-generativeai`, `gemini-2.5-flash`) — generation
+- **Google Gemini API** (`google-generativeai`, `gemini-flash-lite-latest`, REST transport) — generation
 
 ## Live Demo
 
-[Live Demo](your-deployed-url-here)
+[Live Demo (GitHub Pages)](https://sumitjhadev.github.io/ai-research-assistant/)
 
-A static marketing/overview landing page for this project also lives in
-[`landing/`](landing/) (`landing/index.html`) — a single self-contained HTML
-file (Tailwind via CDN, no build step) that you can host on GitHub Pages,
-Cloudflare Pages, or any static host. See [`landing/README.md`](landing/README.md)
-for how to point it at your own GitHub/demo URLs.
+The live demo above is the static marketing/overview landing page
+(`landing/index.html`), hosted for free on **GitHub Pages** directly from this
+repository (Settings → Pages → source: `main` branch, `/landing` folder — no
+build step, Tailwind loaded via CDN). It showcases the pipeline, features, and
+real screenshots below.
+
+> **Note:** GitHub Pages only serves static files. The interactive Streamlit
+> app (Ask / Summarize / Compare) needs a persistent Python process and must be
+> run locally (see Quickstart) or deployed to a platform that supports long-running
+> servers (Render, Railway, Streamlit Community Cloud — see **Deployment** below).
+> The landing page's "Live Demo" button links here; wire it up to a hosted backend
+> URL if/when you deploy one.
 
 ## Screenshots
 
@@ -111,7 +121,7 @@ for how to point it at your own GitHub/demo URLs.
 
 ```bash
 # 1. Clone and enter the project
-git clone https://github.com/<your-username>/ai-research-assistant.git
+git clone https://github.com/sumitjhadev/ai-research-assistant.git
 cd ai-research-assistant
 
 # 2. Create a virtual environment and install dependencies

@@ -291,7 +291,7 @@
         <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">faiss-cpu (IndexFlatIP)</span>
         <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">arxiv</span>
         <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">pypdf</span>
-        <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">Google Gemini (gemini-2.5-flash)</span>
+        <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">Google Gemini (gemini-flash-lite-latest)</span>
         <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">pytest</span>
         <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">Docker</span>
         <span class="mono text-sm bg-slate-900 border border-slate-800 rounded-full px-4 py-2">GitHub Actions CI</span>
@@ -305,33 +305,25 @@
       <div class="text-center mb-14">
         <h2 class="text-sm font-semibold tracking-wider uppercase text-indigo-400 mb-3">Screenshots</h2>
         <h3 class="text-3xl font-bold">The three-tab Streamlit demo</h3>
-        <p class="text-slate-500 text-sm mt-3">Placeholders below — drop real screenshots into
-          <span class="mono">screenshots/</span> and update the <span class="mono">src</span>
-          attributes once the app is deployed.</p>
+        <p class="text-slate-500 text-sm mt-3">Real screenshots from a live run of the Streamlit demo.</p>
       </div>
       <div class="grid md:grid-cols-3 gap-6">
         <figure class="rounded-2xl overflow-hidden border border-slate-800">
-          <div class="screenshot-placeholder h-48 flex items-center justify-center">
-            <span class="text-slate-500 text-sm"><i class="fas fa-image mr-2"></i>screenshots/ask.png</span>
-          </div>
+          <img src="../screenshots/ask.png" alt="Ask tab screenshot" class="w-full h-48 object-cover object-top">
           <figcaption class="p-4 text-sm text-slate-400 bg-slate-900">
             <span class="font-semibold text-slate-200">🔎 Ask</span> — grounded Q&amp;A with
             citation checks and source list.
           </figcaption>
         </figure>
         <figure class="rounded-2xl overflow-hidden border border-slate-800">
-          <div class="screenshot-placeholder h-48 flex items-center justify-center">
-            <span class="text-slate-500 text-sm"><i class="fas fa-image mr-2"></i>screenshots/summarize.png</span>
-          </div>
+          <img src="../screenshots/summarize.png" alt="Summarize tab screenshot" class="w-full h-48 object-cover object-top">
           <figcaption class="p-4 text-sm text-slate-400 bg-slate-900">
             <span class="font-semibold text-slate-200">📝 Summarize</span> — structured
             per-paper breakdown.
           </figcaption>
         </figure>
         <figure class="rounded-2xl overflow-hidden border border-slate-800">
-          <div class="screenshot-placeholder h-48 flex items-center justify-center">
-            <span class="text-slate-500 text-sm"><i class="fas fa-image mr-2"></i>screenshots/compare.png</span>
-          </div>
+          <img src="../screenshots/compare.png" alt="Compare tab screenshot" class="w-full h-48 object-cover object-top">
           <figcaption class="p-4 text-sm text-slate-400 bg-slate-900">
             <span class="font-semibold text-slate-200">⚖️ Compare</span> — side-by-side
             markdown comparison table.
@@ -355,7 +347,7 @@
           <span class="w-3 h-3 rounded-full bg-emerald-500/70"></span>
           <span class="ml-2 text-xs text-slate-500 mono">terminal</span>
         </div>
-        <pre class="mono text-sm p-6 overflow-x-auto text-slate-300 leading-relaxed"><code>git clone https://github.com/&lt;your-username&gt;/ai-research-assistant.git
+        <pre class="mono text-sm p-6 overflow-x-auto text-slate-300 leading-relaxed"><code>git clone https://github.com/sumitjhadev/ai-research-assistant.git
 cd ai-research-assistant
 
 python3.11 -m venv venv &amp;&amp; source venv/bin/activate
@@ -413,8 +405,8 @@ streamlit run app.py</code></pre>
     // Fill in your repo / demo URLs here once known, and every link on the
     // page updates automatically. No other edits needed.
     // ---------------------------------------------------------------------
-    const GITHUB_URL = "https://github.com/YOUR_USERNAME/ai-research-assistant";
-    const LIVE_DEMO_URL = "https://your-deployed-url-here";
+    const GITHUB_URL = "https://github.com/sumitjhadev/ai-research-assistant";
+    const LIVE_DEMO_URL = "https://sumitjhadev.github.io/ai-research-assistant/";
     const README_URL = GITHUB_URL + "#readme";
 
     document.querySelectorAll("#github-link, #github-link-hero, #github-link-cta, #github-link-footer")

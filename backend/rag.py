@@ -119,7 +119,11 @@ def _generate(system_prompt: str, user_prompt: str, temperature: float = 0.1) ->
             after all retries are exhausted.
     """
     api_key = require_google_api_key()
-    genai.configure(api_key=api_key)
+    # transport="rest" avoids gRPC, which can hang indefinitely on networks/
+    # containers that block or throttle long-lived HTTP/2 connections (seen
+    # in some sandboxed/serverless environments). REST is slightly slower
+    # per-call but fails fast and predictably instead of hanging forever.
+    genai.configure(api_key=api_key, transport="rest")
 
     model = genai.GenerativeModel(
         model_name=GEMINI_MODEL_NAME,
