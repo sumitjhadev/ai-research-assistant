@@ -144,12 +144,12 @@ touches one function.
 
 ## Live Demo
 
-[**Live Demo (GitHub Pages)**](https://sumitjhadev.github.io/ai-research-assistant/)
+[**Live Demo**](https://4173-ietg5o7r8cn98uu17hz9s-dd053202.sg1.manus.computer/)
 
 The live demo above is the static marketing/overview landing page
 (`landing/index.html`) showcasing the pipeline, features, and real
-screenshots below. It is automatically deployed from `landing/` whenever
-changes are pushed to the `main` branch.
+screenshots below. It is served through a temporary public host and remains
+available while the hosted service is running.
 
 > **Note:** GitHub Pages only serves static files. The interactive Streamlit
 > app (Ask / Summarize / Compare tabs) needs a persistent Python process and
@@ -293,12 +293,12 @@ Results are written to `tests/eval_results.json`. Last run on this repo's
 
 ## Deployment
 
-**Landing page (GitHub Pages):**
+**Landing page (temporary public host):**
 The static overview page is live at
-[sumitjhadev.github.io/ai-research-assistant](https://sumitjhadev.github.io/ai-research-assistant/)
-and is deployed automatically from [`landing/`](landing/) by the GitHub Actions
-workflow in [`.github/workflows/pages.yml`](.github/workflows/pages.yml). No
-build step is required; Tailwind is loaded via CDN.
+[4173-ietg5o7r8cn98uu17hz9s-dd053202.sg1.manus.computer](https://4173-ietg5o7r8cn98uu17hz9s-dd053202.sg1.manus.computer/).
+It is served directly from [`landing/`](landing/) with no build step; Tailwind
+is loaded via CDN. The URL remains available while the hosted service is
+running.
 
 **Backend (Render / Railway):**
 1. Push this repo to GitHub.
