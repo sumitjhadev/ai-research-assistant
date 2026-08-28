@@ -1,41 +1,67 @@
 # 🔬 AI Research Assistant
 
-### About
+[![CI-ready](https://img.shields.io/badge/tests-pytest-0A9EDC)](tests/)
+[![Lint](https://img.shields.io/badge/lint-ruff-D7FF64)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](requirements.txt)
+[![FastAPI](https://img.shields.io/badge/backend-FastAPI-009485)](backend/api.py)
+[![Streamlit](https://img.shields.io/badge/frontend-Streamlit-FF4B4B)](app.py)
+[![Vector Store](https://img.shields.io/badge/vector%20store-FAISS-4B8BBE)](backend/vectorstore.py)
 
-Ever asked a chatbot a research question and gotten a confident, plausible-sounding
-answer that turned out to be wrong? That's the core problem with generic AI chatbots —
-they're built to sound right, not to *be* right. **AI Research Assistant** is a system
-that searches real academic papers on arXiv, reads them, and answers your questions
-using only what those papers actually say — with a citation next to every claim, linking
-straight back to the source. If the papers it found don't actually answer your question,
-it tells you that instead of making something up. Think of it as a research assistant
-that shows its work every single time.
+Ask a chatbot a research question and you'll get a confident, plausible-sounding
+answer — that may be completely wrong. **AI Research Assistant** fixes that by
+searching real academic papers on arXiv, reading them, and answering questions
+using only what those papers actually say — with a `[paper_id]` citation next
+to every claim, linking straight back to the source. If the corpus doesn't
+actually answer the question, it says so instead of guessing. A research
+assistant that shows its work, every time.
+
+---
+
+## Table of Contents
+
+- [Problem & Solution](#problem)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Live Demo](#live-demo)
+- [Screenshots](#screenshots)
+- [API Reference](#api-reference)
+- [Quickstart](#quickstart)
+- [Docker](#run-with-docker-instead)
+- [Evaluation](#evaluation)
+- [Deployment](#deployment)
+- [Project Structure](#project-structure)
+- [Future Work](#future-work)
 
 ---
 
 ## Problem
 
 Researchers waste enormous amounts of time manually searching, reading, and
-cross-referencing dozens of papers to answer a single question. Meanwhile, generic
-LLM chatbots make this worse in a subtle way: they answer *confidently* even when they
-don't actually know something, quietly fabricating plausible-sounding facts, numbers,
-and citations (hallucination). Neither problem is solved by "just add an LLM" — you need
-retrieval grounded in real sources, and a generation layer that is forced to stay
-honest about what it does and doesn't know.
+cross-referencing dozens of papers to answer a single question. Meanwhile,
+generic LLM chatbots make this worse in a subtle way: they answer *confidently*
+even when they don't actually know something, quietly fabricating
+plausible-sounding facts, numbers, and citations (hallucination). Neither
+problem is solved by "just add an LLM" — you need retrieval grounded in real
+sources, and a generation layer that is forced to stay honest about what it
+does and doesn't know.
 
 ## Solution
 
-This project builds a full agentic RAG (Retrieval-Augmented Generation) pipeline that:
+This project builds a full agentic RAG (Retrieval-Augmented Generation)
+pipeline that:
 
 1. Searches arXiv for real papers on a topic and downloads their PDFs.
 2. Extracts and chunks the text, tagging every chunk with its source paper.
 3. Embeds chunks into a FAISS vector index for fast semantic search.
 4. Retrieves the most relevant chunks for a user's question.
-5. Forces the LLM to answer **only** from those retrieved chunks, citing `[paper_id]`
-   for every claim — and explicitly saying "not enough information in the corpus"
-   when the evidence is too weak to answer confidently.
-6. Verifies that every citation in the generated answer actually maps back to a
-   retrieved source, flagging anything that doesn't.
+5. Forces the LLM to answer **only** from those retrieved chunks, citing
+   `[paper_id]` for every claim — and explicitly saying "not enough
+   information in the corpus" when the evidence is too weak to answer
+   confidently.
+6. Verifies that every citation in the generated answer actually maps back to
+   a retrieved source, flagging anything that doesn't.
 
 ## Architecture
 
@@ -49,39 +75,59 @@ User Query → arXiv Search → Paper Retrieval → PDF Download
 | Stage | Implementation |
 |---|---|
 | arXiv Search | `arxiv` Python package, queries the public arXiv API |
-| PDF Download | `arxiv` package downloader + exponential-backoff retry |
+| PDF Download | Direct HTTP fetch + exponential-backoff retry, cached locally |
 | Text Extraction | `pypdf`, page-by-page with per-page failure isolation |
 | Chunking | Sliding window, ~800 chars / ~150 char overlap, tagged with `paper_id`, `title`, `authors`, `source_url` |
 | Embeddings | `sentence-transformers` (`all-MiniLM-L6-v2`) |
 | Vector Store | FAISS `IndexFlatIP` over L2-normalized vectors (cosine similarity) |
-| Generation | Google Gemini (`gemini-flash-lite-latest`) via `google-generativeai` (REST transport) |
+| Generation | Google Gemini (`gemini-flash-lite-latest`) via `google-generativeai`, REST transport |
 | Citation Verification | Regex-based check that every `[paper_id]` in the answer matches a retrieved chunk |
+| Serving | FastAPI backend (`backend/api.py`) + Streamlit frontend (`app.py`) |
+
+Every LLM call funnels through a **single chokepoint** (`backend/rag.py::_generate()`)
+with retry + exponential backoff, so swapping providers or models later only
+touches one function.
 
 ## Features
 
-- **arXiv search** — query the arXiv API and get title, authors, abstract, published
-  date, PDF URL, and arXiv ID for every result.
-- **PDF ingestion** — downloads PDFs and extracts clean text; a failed download or
-  extraction is logged and skipped, never crashes the pipeline.
-- **Sliding-window chunking** — ~800 characters with ~150 character overlap; every
-  chunk carries `paper_id`, `title`, `authors`, and `source_url` for citation.
-- **Semantic retrieval** — `sentence-transformers` embeddings + FAISS `IndexFlatIP`
-  cosine-similarity search.
-- **Citation-grounded RAG QA** — the LLM answers *only* from retrieved chunks, cites
-  `[paper_id]` for every claim, and explicitly declines ("not enough information in
-  the corpus") rather than guessing.
-- **Paper summarization** — structured per-paper summary: Methodology, Dataset, Key
-  Results, Limitations.
-- **Paper comparison** — markdown comparison table across 2-5 papers: Method /
-  Dataset / Model / Results / Limitations.
-- **Evaluation harness** — runs a labeled 40-question set against the retriever and
-  reports Recall@5 and average retrieval latency to a JSON file.
-- **Production hardening** — retry/backoff on network calls, structured logging,
-  Pydantic input validation, in-memory response caching + rate limiting on `/ask`,
-  Docker + CI, and a full pytest suite with mocked LLM calls. The Gemini client is
-  pinned to `transport="rest"` (avoids gRPC connectivity issues in restricted network
-  environments) and to the `gemini-flash-lite-latest` model alias (a fast, generously
-  quota'd free-tier model, confirmed working end-to-end).
+- **Real arXiv search** — query the public arXiv API and get title, authors,
+  abstract, published date, PDF URL, and arXiv ID for every result.
+- **Resilient PDF ingestion** — downloads PDFs with retry/backoff and extracts
+  clean text; a failed download or extraction is logged and skipped per-paper,
+  never crashes the whole pipeline.
+- **Metadata-tagged chunking** — ~800 character sliding-window chunks with
+  ~150 character overlap; every chunk carries `paper_id`, `title`, `authors`,
+  and `source_url` for citation.
+- **Semantic retrieval** — `sentence-transformers` embeddings + FAISS
+  `IndexFlatIP` cosine-similarity search, ~0.23s average query latency
+  (measured on this corpus, see [Evaluation](#evaluation)).
+- **Citation-grounded RAG QA** — the LLM answers *only* from retrieved chunks,
+  cites `[paper_id]` for every claim, and explicitly declines ("not enough
+  information in the corpus") rather than guessing.
+- **Citation verification guardrail** — every citation in a generated answer
+  is cross-checked against what was actually retrieved; anything that doesn't
+  match is flagged as `invalid_ids` in the API response and surfaced in the UI.
+- **Structured paper summarization** — per-paper breakdown: Methodology,
+  Dataset, Key Results, Limitations.
+- **Multi-paper comparison** — markdown comparison table across 2–5 papers:
+  Method / Dataset / Model / Results / Limitations, plus a notable-differences
+  summary.
+- **Evaluation harness** — runs a labeled 40-question set against the
+  retriever and reports Recall@5 and average/p95 retrieval latency to a JSON
+  file (`tests/evaluate.py`).
+- **Production hardening**:
+  - Retry + exponential backoff on every network call (arXiv, PDF download, Gemini).
+  - Structured logging with consistent format across all modules.
+  - Pydantic input validation on every API request (length, count, blank/duplicate checks).
+  - In-memory response caching (30 min TTL) + basic rate limiting on `/ask`.
+  - The Gemini client is pinned to `transport="rest"` to avoid gRPC connectivity
+    issues in restricted network environments, and to the
+    `gemini-flash-lite-latest` model alias (fast, generously quota'd on the
+    free tier, confirmed working end-to-end).
+  - Dockerfile + docker-compose for reproducible local deployment.
+  - Full pytest suite (39 tests across chunking, retrieval, citation
+    verification, and API endpoints) with mocked LLM calls — no API key or
+    network access needed to run the test suite.
 
 ## Tech Stack
 
@@ -93,29 +139,63 @@ User Query → arXiv Search → Paper Retrieval → PDF Download
 - **arxiv** — search & PDF download
 - **pypdf** — text extraction
 - **Google Gemini API** (`google-generativeai`, `gemini-flash-lite-latest`, REST transport) — generation
+- **pytest + ruff** — testing and linting
+- **Docker / docker-compose** — containerized local deployment
 
 ## Live Demo
 
-[Live Demo (GitHub Pages)](https://sumitjhadev.github.io/ai-research-assistant/)
+[**Live Demo (GitHub Pages)**](https://sumitjhadev.github.io/ai-research-assistant/)
 
 The live demo above is the static marketing/overview landing page
-(`landing/index.html`), hosted for free on **GitHub Pages** directly from this
-repository (Settings → Pages → source: `main` branch, `/landing` folder — no
-build step, Tailwind loaded via CDN). It showcases the pipeline, features, and
-real screenshots below.
+(`landing/index.html`) showcasing the pipeline, features, and real
+screenshots below.
 
 > **Note:** GitHub Pages only serves static files. The interactive Streamlit
-> app (Ask / Summarize / Compare) needs a persistent Python process and must be
-> run locally (see Quickstart) or deployed to a platform that supports long-running
-> servers (Render, Railway, Streamlit Community Cloud — see **Deployment** below).
-> The landing page's "Live Demo" button links here; wire it up to a hosted backend
-> URL if/when you deploy one.
+> app (Ask / Summarize / Compare tabs) needs a persistent Python process and
+> must be run locally (see [Quickstart](#quickstart)) or deployed to a
+> platform that supports long-running servers — see [Deployment](#deployment)
+> for Render/Railway (backend) + Streamlit Community Cloud (frontend) instructions.
 
 ## Screenshots
 
-![Ask tab](screenshots/ask.png)
-![Summarize tab](screenshots/summarize.png)
-![Compare tab](screenshots/compare.png)
+| Ask | Summarize | Compare |
+|---|---|---|
+| ![Ask tab](screenshots/ask.png) | ![Summarize tab](screenshots/summarize.png) | ![Compare tab](screenshots/compare.png) |
+
+## API Reference
+
+Base URL when running locally: `http://localhost:8000`
+
+| Method | Endpoint | Body | Description |
+|---|---|---|---|
+| `GET` | `/health` | — | Liveness check → `{"status": "ok"}` |
+| `GET` | `/papers` | — | List all ingested papers (metadata) |
+| `POST` | `/ask` | `{"question": str, "k"?: int}` | Citation-grounded Q&A. `k` (1–20, default 5) controls how many chunks are retrieved. Returns `answer`, `sources`, `citation_check`, `cached`. |
+| `POST` | `/summarize` | `{"paper_id": str}` | Structured summary of one paper. Returns `paper_id`, `title`, `summary`. |
+| `POST` | `/compare` | `{"paper_ids": [str, ...]}` | Markdown comparison table across 2–5 papers. Returns `paper_ids`, `titles`, `comparison`. |
+
+Example:
+
+```bash
+curl -X POST http://localhost:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is retrieval augmented generation used for?", "k": 5}'
+```
+
+```json
+{
+  "answer": "Retrieval-Augmented Generation (RAG) is used to provide Large Language Models (LLMs) with knowledge from a reference textual database... [2309.15217v2]",
+  "sources": [{"paper_id": "2309.15217v2", "title": "...", "source_url": "...", "score": 0.71}],
+  "citation_check": {"cited_ids": ["2309.15217v2"], "valid_ids": ["2309.15217v2"], "invalid_ids": [], "is_grounded": true, "declined": false},
+  "cached": false
+}
+```
+
+`/ask` returns `503` if the vector store hasn't been built yet, `429` if
+called faster than the basic rate limit allows, and `500` on unexpected
+generation failures (with the underlying error message in `detail`).
+`/summarize` and `/compare` return `404` if a requested `paper_id` has no
+ingested chunks.
 
 ## Quickstart
 
@@ -151,7 +231,16 @@ streamlit run app.py
 ```
 
 Then open the Streamlit URL printed in your terminal (usually
-`http://localhost:8501`) and try the **Ask**, **Summarize**, and **Compare** tabs.
+`http://localhost:8501`) and try the **Ask**, **Summarize**, and **Compare**
+tabs.
+
+### Run tests / lint locally
+
+```bash
+pip install -r requirements-dev.txt
+PYTHONPATH=. pytest tests/ -v      # 39 tests, all LLM calls mocked — no API key needed
+ruff check .
+```
 
 ### Run with Docker instead
 
@@ -162,88 +251,93 @@ docker compose up --build
 # frontend: http://localhost:8501
 ```
 
-Note: you still need to run ingestion + vector store build once (either locally
-before building the image, or via `docker compose exec backend python backend/ingest.py ...`)
-since the corpus is not baked into the image.
+Note: you still need to run ingestion + vector store build once (either
+locally before building the image, or via
+`docker compose exec backend python backend/ingest.py ...`) since the corpus
+is not baked into the image.
 
 ## Evaluation
 
 The evaluation harness runs the labeled question set in
-`data/research_questions.json` (40 questions across retrieval/method, dataset,
-results/metrics, and limitations/future-work categories) against the FAISS
-retriever and computes:
+`data/research_questions.json` (40 questions across retrieval/method,
+dataset, results/metrics, and limitations/future-work categories) against the
+FAISS retriever and computes:
 
-- **Recall@5** — fraction of labeled questions where at least one expected source
-  paper appears in the top-5 retrieved chunks.
+- **Recall@5** — fraction of labeled questions where at least one expected
+  source paper appears in the top-5 retrieved chunks.
 - **Average / p95 retrieval latency** — wall-clock time per query.
 
 ```bash
-python tests/evaluate.py
-python tests/evaluate.py --k 5 --questions data/research_questions.json
+PYTHONPATH=. python tests/evaluate.py
+PYTHONPATH=. python tests/evaluate.py --k 5 --questions data/research_questions.json
 ```
 
-Results are written to `tests/eval_results.json`.
-
-> **Note:** `expected_sources` in `data/research_questions.json` ships empty by
-> design — only a human who has inspected the actual ingested corpus can verify
-> true ground truth. Fill these in yourself after running ingestion before Recall@5
-> becomes meaningful; until then the script reports latency only and flags how many
-> questions are still unlabeled.
-
-## Results
-
-> Fill in after running `python tests/evaluate.py` on your own ingested corpus.
+Results are written to `tests/eval_results.json`. Last run on this repo's
+15-paper / 1,521-chunk corpus:
 
 | Metric | Value |
 |---|---|
-| Corpus size (papers) | _TBD_ |
-| Total chunks | _TBD_ |
-| Recall@5 | _TBD_ |
-| Avg retrieval latency | _TBD_ |
-| p95 retrieval latency | _TBD_ |
+| Corpus size (papers ingested / extracted) | 15 / 15 |
+| Total chunks | 1,521 |
+| Retrieval k | 5 |
+| Average retrieval latency | **0.232s** |
+| p95 retrieval latency | **0.889s** |
+| Recall@5 | _not yet labeled — see note below_ |
+
+> **Note:** `expected_sources` in `data/research_questions.json` ships empty
+> by design — only a human who has inspected the actual ingested corpus can
+> verify true ground truth. Fill these in yourself after running ingestion
+> before Recall@5 becomes meaningful; until then the script reports latency
+> only and flags how many questions are still unlabeled (currently 40/40).
 
 ## Deployment
 
+**Landing page (GitHub Pages):**
+The static overview page in [`landing/`](landing/) is designed to be served
+directly from this repo via GitHub Pages (Settings → Pages → Deploy from a
+branch → `main` → `/landing`). No build step — Tailwind is loaded via CDN.
+
 **Backend (Render / Railway):**
 1. Push this repo to GitHub.
-2. Create a new Web Service pointing at the repo, using the included `Dockerfile`
-   (or `uvicorn backend.api:app --host 0.0.0.0 --port $PORT` as the start command).
-3. Set the `GOOGLE_API_KEY` environment variable in the platform's dashboard —
-   never in code.
-4. Ingest the corpus and build the vector store either as a one-off release job or
-   by mounting a persistent volume for `data/corpus/`.
+2. Create a new Web Service pointing at the repo, using the included
+   `Dockerfile` (or `uvicorn backend.api:app --host 0.0.0.0 --port $PORT` as
+   the start command).
+3. Set the `GOOGLE_API_KEY` environment variable in the platform's dashboard
+   — never in code.
+4. Ingest the corpus and build the vector store either as a one-off release
+   job or by mounting a persistent volume for `data/corpus/`.
 
 **Frontend (Streamlit Community Cloud):**
 1. Connect your GitHub repo at [share.streamlit.io](https://share.streamlit.io).
 2. Set the main file to `app.py`.
 3. Add a `BACKEND_URL` secret pointing at your deployed backend's public URL.
-4. Deploy — Streamlit Community Cloud builds from `requirements.txt` automatically.
+4. Deploy — Streamlit Community Cloud builds from `requirements.txt`
+   automatically.
 
 ## Project Structure
 
 ```
-research-agent/
+ai-research-assistant/
 ├── backend/
 │   ├── config.py       # paths, model names, env vars, structured logging
 │   ├── ingest.py       # arXiv search + PDF download + chunking, CLI entrypoint
-│   ├── vectorstore.py  # embedding + FAISS build/search, CLI entrypoint
-│   ├── rag.py          # ask() / summarize_paper() / compare_papers()
-│   └── api.py          # FastAPI app exposing /ask /summarize /compare /papers
+│   ├── vectorstore.py   # embedding + FAISS build/search, CLI entrypoint
+│   ├── rag.py           # ask() / summarize_paper() / compare_papers()
+│   └── api.py            # FastAPI app exposing /ask /summarize /compare /papers
 ├── app.py                 # Streamlit UI with tabs: Ask / Summarize / Compare
 ├── tests/
-│   ├── evaluate.py        # Recall@5 + latency evaluation script
-│   ├── test_ingest.py     # chunker unit tests
-│   ├── test_vectorstore.py# retriever unit tests
-│   ├── test_rag.py        # citation-grounding unit tests
-│   └── test_api.py        # FastAPI endpoint unit tests (mocked LLM)
+│   ├── evaluate.py         # Recall@5 + latency evaluation script
+│   ├── test_ingest.py      # chunker unit tests
+│   ├── test_vectorstore.py # retriever unit tests
+│   ├── test_rag.py         # citation-grounding unit tests
+│   └── test_api.py         # FastAPI endpoint unit tests (mocked LLM)
 ├── data/
 │   ├── research_questions.json   # 40-question eval set
-│   └── sample_topics.md          # alternative arXiv queries
+│   └── sample_topics.md           # alternative arXiv queries
 ├── landing/
 │   ├── index.html                 # static marketing/overview landing page
 │   └── README.md                  # how to configure links + deploy it
-├── .github/workflows/ci.yml      # pytest + ruff on every push
-├── screenshots/                   # drop your own screenshots here
+├── screenshots/                   # ask.png / summarize.png / compare.png
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
@@ -256,11 +350,14 @@ research-agent/
 
 ## Future Work
 
-- Add re-ranking (e.g. cross-encoder) after initial FAISS retrieval to improve
-  precision on ambiguous queries.
-- Support multi-hop questions that require combining evidence from several papers.
+- Add re-ranking (e.g. cross-encoder) after initial FAISS retrieval to
+  improve precision on ambiguous queries.
+- Support multi-hop questions that require combining evidence from several
+  papers.
 - Add streaming responses in the Streamlit UI for faster perceived latency.
 - Persist the FAISS index in a managed vector DB (e.g. Pinecone, Qdrant) for
   multi-instance deployments instead of a local file.
 - Add a feedback loop where user-flagged bad citations retrain a re-ranker.
-- Expand the evaluation harness with a Precision@k and MRR metric alongside Recall@5.
+- Expand the evaluation harness with a Precision@k and MRR metric alongside
+  Recall@5, and fill in `expected_sources` ground truth.
+- Migrate off the deprecated `google-generativeai` SDK to `google-genai`.
