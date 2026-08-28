@@ -156,7 +156,9 @@ def _generate(system_prompt: str, user_prompt: str, temperature: float = 0.1) ->
             time.sleep(sleep_s)
 
     logger.error("Gemini generation failed after %d attempts", MAX_RETRIES, exc_info=True)
-    raise RuntimeError(f"LLM generation failed after {MAX_RETRIES} attempts: {last_exc}") from last_exc
+    raise RuntimeError(
+        f"LLM generation failed after {MAX_RETRIES} attempts: {last_exc}"
+    ) from last_exc
 
 
 def verify_citations(answer: str, retrieved_chunks: list[dict[str, Any]]) -> dict[str, Any]:
@@ -270,7 +272,7 @@ def summarize_paper(paper_id: str, k: int = 12) -> dict[str, Any]:
     title = paper_chunks[0]["title"]
     context = _format_context(paper_chunks)
     user_prompt = (
-        f"Excerpts from the paper (paper_id={paper_id}, title=\"{title}\"):\n\n{context}\n\n"
+        f'Excerpts from the paper (paper_id={paper_id}, title="{title}"):\n\n{context}\n\n'
         "Write the structured summary now."
     )
     summary = _generate(_SUMMARY_SYSTEM_PROMPT, user_prompt)
@@ -306,7 +308,7 @@ def compare_papers(paper_ids: list[str], k_per_paper: int = 6) -> dict[str, Any]
         context_blocks.append(_format_context(paper_chunks))
 
     context = "\n\n---\n\n".join(context_blocks)
-    papers_list = "\n".join(f"- {pid}: \"{all_titles[pid]}\"" for pid in paper_ids)
+    papers_list = "\n".join(f'- {pid}: "{all_titles[pid]}"' for pid in paper_ids)
     user_prompt = (
         f"Papers to compare:\n{papers_list}\n\n"
         f"Excerpts:\n\n{context}\n\n"

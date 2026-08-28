@@ -164,7 +164,11 @@ class TestSummarize:
 
     def test_summarize_success(self, client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         """A valid paper_id should return the mocked summary."""
-        fake_result = {"paper_id": "1234.5678", "title": "Fake Paper", "summary": "## Methodology\n..."}
+        fake_result = {
+            "paper_id": "1234.5678",
+            "title": "Fake Paper",
+            "summary": "## Methodology\n...",
+        }
         monkeypatch.setattr(api_module, "summarize_paper", lambda paper_id: fake_result)
         resp = client.post("/summarize", json={"paper_id": "1234.5678"})
         assert resp.status_code == 200
