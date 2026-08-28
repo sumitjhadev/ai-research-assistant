@@ -7,7 +7,7 @@ portfolio project, but issues and pull requests are welcome.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/<your-username>/ai-research-assistant.git
+git clone https://github.com/sumitjhadev/ai-research-assistant.git
 cd ai-research-assistant
 
 # 2. Create a virtual environment
