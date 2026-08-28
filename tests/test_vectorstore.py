@@ -90,6 +90,23 @@ class TestVectorStore:
         with pytest.raises(ValueError):
             store.build([])
 
+    def test_search_rejects_blank_query(self) -> None:
+        """Blank queries should fail validation before embedding or FAISS search."""
+        store = VectorStore()
+        store.build(sample_chunks())
+        with pytest.raises(ValueError, match="non-empty"):
+            store.search("   ")
+
+    def test_save_creates_parent_directories(self, tmp_path) -> None:
+        """Saving to a nested path should create missing artifact directories."""
+        store = VectorStore()
+        store.build(sample_chunks())
+        index_path = tmp_path / "nested" / "idx.faiss"
+        metadata_path = tmp_path / "nested" / "meta.jsonl"
+        store.save(index_path=str(index_path), metadata_path=str(metadata_path))
+        assert index_path.exists()
+        assert metadata_path.exists()
+
     def test_search_returns_ranked_results_with_scores(self) -> None:
         """search() should return up to k results, each with a similarity score."""
         store = VectorStore()
@@ -140,6 +157,17 @@ class TestVectorStore:
         loaded.load(index_path=str(index_path), metadata_path=str(metadata_path))
         assert loaded.index.ntotal == store.index.ntotal
         assert len(loaded.metadata) == len(store.metadata)
+
+    def test_load_rejects_mismatched_metadata(self, tmp_path) -> None:
+        """Loading inconsistent artifacts should fail instead of misaligning results."""
+        store = VectorStore()
+        store.build(sample_chunks())
+        index_path = tmp_path / "idx.faiss"
+        metadata_path = tmp_path / "meta.jsonl"
+        store.save(index_path=str(index_path), metadata_path=str(metadata_path))
+        metadata_path.write_text("{}\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="out of sync"):
+            VectorStore().load(index_path=str(index_path), metadata_path=str(metadata_path))
 
     def test_load_missing_files_raises(self, tmp_path) -> None:
         """Loading from nonexistent paths should raise FileNotFoundError."""

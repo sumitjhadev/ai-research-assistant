@@ -22,6 +22,32 @@ import streamlit as st
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/")
 REQUEST_TIMEOUT_SECONDS = 60
 
+
+def _backend_error(resp: requests.Response) -> str:
+    """Return the backend's structured detail message when available."""
+    try:
+        payload = resp.json()
+    except ValueError:
+        payload = {}
+    detail = payload.get("detail") if isinstance(payload, dict) else None
+    if isinstance(detail, str) and detail.strip():
+        return detail.strip()
+    return f"Backend returned HTTP {resp.status_code}."
+
+
+def _show_request_error(resp: requests.Response) -> None:
+    """Display a user-friendly message for a non-success backend response."""
+    message = _backend_error(resp)
+    if resp.status_code == 429:
+        st.warning(message)
+    elif resp.status_code in {404, 422}:
+        st.warning(message)
+    elif resp.status_code >= 500:
+        st.error(message)
+    else:
+        st.error(message)
+
+
 st.set_page_config(page_title="AI Research Assistant", page_icon="📚", layout="wide")
 
 
@@ -89,10 +115,9 @@ def render_ask_tab() -> None:
                     json={"question": question.strip(), "k": k},
                     timeout=REQUEST_TIMEOUT_SECONDS,
                 )
-                if resp.status_code == 429:
-                    st.warning("Rate limited — please wait a moment and try again.")
+                if not resp.ok:
+                    _show_request_error(resp)
                     return
-                resp.raise_for_status()
                 data = resp.json()
             except requests.RequestException as exc:
                 st.error(f"Request failed: {exc}")
@@ -148,7 +173,9 @@ def render_summarize_tab(papers: list[dict[str, Any]]) -> None:
                     json={"paper_id": paper_id},
                     timeout=REQUEST_TIMEOUT_SECONDS,
                 )
-                resp.raise_for_status()
+                if not resp.ok:
+                    _show_request_error(resp)
+                    return
                 data = resp.json()
             except requests.RequestException as exc:
                 st.error(f"Request failed: {exc}")
@@ -165,8 +192,10 @@ def render_compare_tab(papers: list[dict[str, Any]]) -> None:
         papers: List of ingested paper metadata dicts, for the multiselect.
     """
     st.header("Compare papers")
-    st.caption("Select 2-5 papers to generate a Method / Dataset / Model / Results / "
-               "Limitations comparison table.")
+    st.caption(
+        "Select 2-5 papers to generate a Method / Dataset / Model / Results / "
+        "Limitations comparison table."
+    )
 
     if not papers:
         st.info("No papers ingested yet. Run `python backend/ingest.py` first.")
@@ -187,7 +216,9 @@ def render_compare_tab(papers: list[dict[str, Any]]) -> None:
                     json={"paper_ids": paper_ids},
                     timeout=REQUEST_TIMEOUT_SECONDS,
                 )
-                resp.raise_for_status()
+                if not resp.ok:
+                    _show_request_error(resp)
+                    return
                 data = resp.json()
             except requests.RequestException as exc:
                 st.error(f"Request failed: {exc}")

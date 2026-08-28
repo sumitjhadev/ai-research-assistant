@@ -64,10 +64,17 @@ def embed_texts(texts: list[str]) -> np.ndarray:
         A (len(texts), dim) float32 numpy array, L2-normalized row-wise so
         that inner product == cosine similarity.
     """
+    if not texts:
+        return np.empty((0, 0), dtype="float32")
+    if any(not isinstance(text, str) or not text.strip() for text in texts):
+        raise ValueError("texts must contain only non-empty strings")
+
     model = get_embedding_model()
     embeddings = model.encode(
         texts, convert_to_numpy=True, show_progress_bar=False, batch_size=32
     ).astype("float32")
+    if embeddings.ndim != 2 or embeddings.shape[0] != len(texts):
+        raise ValueError("embedding model returned an invalid shape")
     faiss.normalize_L2(embeddings)
     return embeddings
 
@@ -118,6 +125,10 @@ class VectorStore:
         """
         if self.index is None:
             raise RuntimeError("Cannot save an unbuilt vector store. Call build() first.")
+        from pathlib import Path
+
+        Path(index_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(metadata_path).parent.mkdir(parents=True, exist_ok=True)
         faiss.write_index(self.index, index_path)
         with open(metadata_path, "w", encoding="utf-8") as f:
             for item in self.metadata:
@@ -143,13 +154,19 @@ class VectorStore:
                 f"Vector store not found at {index_path} / {metadata_path}. "
                 "Run `python backend/vectorstore.py build` first."
             )
-        self.index = faiss.read_index(index_path)
+        loaded_index = faiss.read_index(index_path)
         self.metadata = []
         with open(metadata_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
                     self.metadata.append(json.loads(line))
+        if loaded_index.ntotal != len(self.metadata):
+            raise ValueError(
+                "Vector index and metadata are out of sync: "
+                f"{loaded_index.ntotal} vectors but {len(self.metadata)} metadata records"
+            )
+        self.index = loaded_index
         logger.info("Loaded FAISS index with %d vectors from %s", self.index.ntotal, index_path)
 
     def search(self, query: str, k: int = DEFAULT_TOP_K) -> list[dict[str, Any]]:
@@ -169,7 +186,9 @@ class VectorStore:
         """
         if self.index is None:
             raise RuntimeError("Vector store is not loaded. Call build() or load() first.")
-        k = max(1, min(k, MAX_TOP_K))
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError("query must be a non-empty string")
+        k = max(1, min(k, MAX_TOP_K, self.index.ntotal))
 
         query_vec = embed_texts([query])
         scores, indices = self.index.search(query_vec, k)
@@ -211,7 +230,7 @@ def build_command() -> None:
     chunks = load_chunks()
     if not chunks:
         logger.error(
-            "No chunks found. Run `python backend/ingest.py --query \"...\"` before building."
+            'No chunks found. Run `python backend/ingest.py --query "..."` before building.'
         )
         raise SystemExit(1)
     store = VectorStore()

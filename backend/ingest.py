@@ -128,6 +128,9 @@ def _retry_with_backoff(fn, *args, max_retries: int = MAX_RETRIES, **kwargs):
     Raises:
         The last exception raised by fn if all retries are exhausted.
     """
+    if max_retries < 1:
+        raise ValueError("max_retries must be at least 1")
+
     last_exc: Exception | None = None
     for attempt in range(1, max_retries + 1):
         try:
@@ -145,8 +148,9 @@ def _retry_with_backoff(fn, *args, max_retries: int = MAX_RETRIES, **kwargs):
                 sleep_s,
             )
             time.sleep(sleep_s)
-    assert last_exc is not None
-    raise last_exc
+    # The validation above guarantees at least one attempt, so an exception
+    # is always available when execution reaches this point.
+    raise last_exc  # type: ignore[misc]
 
 
 def download_pdf(paper: Paper, dest_dir: Path = PDF_DIR) -> Path | None:

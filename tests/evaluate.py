@@ -120,11 +120,14 @@ def run_evaluation(questions: list[dict[str, Any]], k: int = DEFAULT_TOP_K) -> d
         "k": k,
         "total_questions": len(questions),
         "labeled_questions": labeled_total,
+        "labeled_hits": labeled_hits,
         "unlabeled_questions": unlabeled_count,
         f"recall_at_{k}": recall,
         "average_latency_seconds": round(avg_latency, 4),
         "p95_latency_seconds": round(
-            statistics.quantiles(latencies, n=20)[18] if len(latencies) >= 20 else max(latencies, default=0.0),
+            statistics.quantiles(latencies, n=20)[18]
+            if len(latencies) >= 20
+            else max(latencies, default=0.0),
             4,
         ),
         "per_question": per_question_results,
@@ -137,7 +140,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate retrieval Recall@k and latency.")
     parser.add_argument("--k", type=int, default=DEFAULT_TOP_K, help="Top-k for retrieval")
     parser.add_argument(
-        "--questions", type=str, default=str(DEFAULT_QUESTIONS_PATH), help="Path to eval question set"
+        "--questions",
+        type=str,
+        default=str(DEFAULT_QUESTIONS_PATH),
+        help="Path to eval question set",
     )
     args = parser.parse_args()
 
@@ -167,7 +173,7 @@ def main() -> None:
             "%d questions still unlabeled",
             args.k,
             results[recall_key],
-            results["labeled_questions"],
+            results["labeled_hits"],
             results["labeled_questions"],
             results["average_latency_seconds"],
             results["unlabeled_questions"],

@@ -27,7 +27,7 @@ constants, so you only need to edit them once.
 ## Preview locally
 
 ```bash
-cd research-agent/landing
+cd ai-research-assistant/landing
 python3 -m http.server 8080
 # open http://localhost:8080
 ```
